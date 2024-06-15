@@ -13,16 +13,17 @@ try:
     cursor = connection.cursor()
 
     # Drop the procedure if it exists (optional)
-    drop_proc_query = """DROP PROCEDURE IF EXISTS maximumorder"""
+    drop_proc_query = """DROP FUNCTION IF EXISTS maximumorder() CASCADE"""
     cursor.execute(drop_proc_query)
     connection.commit()  # Commit drop procedure
 
     # Create the stored procedure
     max_order_proc = """
-    CREATE OR REPLACE PROCEDURE maximumorder(OUT max_order INTEGER) 
+    CREATE OR REPLACE FUNCTION maximumorder()
+    RETURNS TABLE(OrderTotal NUMERIC) 
     AS $$
     BEGIN
-        SELECT "OrderTotal" INTO max_order FROM "Orders" ORDER BY "OrderTotal" DESC LIMIT 1;
+        RETURN QUERY SELECT "OrderTotal" AS max_order FROM "Orders" ORDER BY "OrderTotal" DESC LIMIT 1;
     END;
     $$
     LANGUAGE plpgsql;
@@ -31,7 +32,7 @@ try:
     connection.commit()  # Commit create procedure
 
     # Call the stored procedure using CALL
-    cursor.execute("CALL maximumorder()")
+    cursor.execute("SELECT maximumorder()")
     
     # Fetch the result from the stored procedure
     result = cursor.fetchone()[0]  # Assuming only one row and one column returned
