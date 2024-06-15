@@ -1,4 +1,5 @@
 import psycopg2 as connector
+from config import DB_CONFIG
 from psycopg2 import Error, sql
 from faker import Faker
 import numpy as np
@@ -273,7 +274,7 @@ def makeOrder(num):
 order_data = makeOrder(5)
 #connecting to the database
 try:
-    connection = connector.connect(host = "localhost", user="postgres", password="Bhaktapur@2024", dbname="LittleLemonDB")
+    connection = connector.connect(**DB_CONFIG)
     cursor = connection.cursor()
 
                     #------------QUERY TO INSERT INTO CUSTOMERS TABLE
@@ -344,3 +345,4 @@ except Error as e:
     print("Try again.")
     
 
+connection.close()
