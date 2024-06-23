@@ -1,6 +1,6 @@
-# Module 2: Task 2
-## Creating a procedure to check the booking id if it exists or not in the table.
-# In postgresql, there is no stored procedure, instead it have a function, so creaing a function.
+# Module 2 2nd exercise: Task 3
+## Creating a procedure to check the booking id if it exists or not in the table and drop the column if exist to cancel the booking.
+
 
 import psycopg2 
 
@@ -15,13 +15,13 @@ try:
     cursor.execute("BEGIN;")
 
     # Drop the procedure if it exists (optional)
-    drop_proc_query = """DROP FUNCTION IF EXISTS checkbooking(customer_id Integer) CASCADE"""
+    drop_proc_query = """DROP FUNCTION IF EXISTS checkbooking(table_number INTEGER, booking_date DATE) CASCADE"""
     cursor.execute(drop_proc_query)
     connection.commit()  # Commit drop procedure
 
 
     #creating a function checkbooking which accepts a parameter
-    check_proc_query = """CREATE OR REPLACE FUNCTION checkbooking(customer_id INTEGER)      
+    check_proc_query = """CREATE OR REPLACE FUNCTION checkbooking(table_number INTEGER, booking_date DATE)      
     RETURNS TABLE(BookingID INTEGER,
         Bill Numeric,
         TableNumber INTEGER,
@@ -33,21 +33,25 @@ try:
         BookingDate Date
     ) AS $$
     BEGIN
-        RETURN QUERY SELECT * FROM "Bookings" WHERE "CustomerID" = checkbooking.customer_id;
+        RETURN QUERY delete from "Bookings" where "TableNumber" = checkbooking.table_number AND "BookingDate" = checkbooking.booking_date Returning *;
     END;
     $$
     LANGUAGE plpgsql;"""
 
     cursor.execute(check_proc_query)
-    customer_id = 3
+    table_number = 6
+    booking_date = '2024-07-06'
 
-    cursor.execute("SELECT * FROM checkbooking(%s)",(customer_id,))     # calling checkbooking function with a parameter
+    cursor.execute("SELECT * FROM checkbooking(%s, %s)",(table_number, booking_date,))     # calling checkbooking function with a parameter
     # cols = [desc[0] for desc in cursor.description]
     # print(cols)
     results = cursor.fetchall()
-    #print(results)
-    for i in results:
-        print(i)
+    if results:
+        print(f"Deleted Successfully.")
+
+    else:
+        print(f"Nothing happened.")
+    
 
     #Transaction commit
     connection.commit()

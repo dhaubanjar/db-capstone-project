@@ -1,9 +1,10 @@
-# Module 2: Task 2
+# Module 2: Task 3
 ## Creating a procedure to check the booking id if it exists or not in the table.
 # In postgresql, there is no stored procedure, instead it have a function, so creaing a function.
+# In this code, In the else statement, I didn't add the code which insert the values in the Bookings table because the foreign key constraints that i created
+# won't let adding the new data before adding the customer ID = 6 in the customers table.
 
 import psycopg2 
-
 from psycopg2 import Error
 from config import DB_CONFIG
 
@@ -15,13 +16,13 @@ try:
     cursor.execute("BEGIN;")
 
     # Drop the procedure if it exists (optional)
-    drop_proc_query = """DROP FUNCTION IF EXISTS checkbooking(customer_id Integer) CASCADE"""
+    drop_proc_query = """DROP FUNCTION IF EXISTS AddValidBooking(booking_date DATE, table_number Integer) CASCADE"""
     cursor.execute(drop_proc_query)
     connection.commit()  # Commit drop procedure
 
 
-    #creating a function checkbooking which accepts a parameter
-    check_proc_query = """CREATE OR REPLACE FUNCTION checkbooking(customer_id INTEGER)      
+    #creating a function AddValidBooking which accepts a parameter
+    check_proc_query = """CREATE OR REPLACE FUNCTION AddValidBooking(booking_date Date, table_number INTEGER)      
     RETURNS TABLE(BookingID INTEGER,
         Bill Numeric,
         TableNumber INTEGER,
@@ -33,24 +34,26 @@ try:
         BookingDate Date
     ) AS $$
     BEGIN
-        RETURN QUERY SELECT * FROM "Bookings" WHERE "CustomerID" = checkbooking.customer_id;
+        RETURN QUERY SELECT * FROM "Bookings" WHERE "BookingDate" = AddValidBooking.booking_date AND "TableNumber" = AddValidBooking.table_number;
     END;
     $$
     LANGUAGE plpgsql;"""
 
     cursor.execute(check_proc_query)
-    customer_id = 3
+    table_number = 3
+    booking_date = '2024-06-06'
 
-    cursor.execute("SELECT * FROM checkbooking(%s)",(customer_id,))     # calling checkbooking function with a parameter
+    cursor.execute("SELECT * FROM AddValidBooking(%s , %s)",(booking_date, table_number, ))     # calling AddValidBooking function with a parameter
     # cols = [desc[0] for desc in cursor.description]
     # print(cols)
     results = cursor.fetchall()
-    #print(results)
-    for i in results:
-        print(i)
+    if results:
+        print("Already Booked")
+        for i in results:
+            print(i)
+    else:
+        print("The booking must be added.")
 
-    #Transaction commit
-    connection.commit()
 except psycopg2.DatabaseError as e:
     connection.rollback()
     print(f"Error: {e}")
